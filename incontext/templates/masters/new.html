@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+
+{% block header %}
+<h1>{% block title %}New Master{% endblock %}</h1>
+{% endblock %}
+
+{% block main %}
+<form method="post">
+	<label for="name">Name
+		<input name="name" id="name" value="{{ request.form['name'] }}" autofocus required>
+	</label>
+	<fieldset>
+		<legend>Select a master type:</legend>
+		<div>
+			<input type="radio" name="master_type" id="list">
+			<label for="list">List</label>
+		</div>
+		<div>
+			<input type="radio" name="master_type" id="agent">
+			<label for="agent">Agent</label>
+		</div>
+	</fieldset>
+	<label for="name">Description
+		<textarea name="description" id="description" value="{{ request.form['description'] }}"></textarea>
+	</label>
+	<input type="submit" value="Save">
+</form>
+{% endblock %}

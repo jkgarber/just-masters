@@ -38,7 +38,7 @@ def create_app(test_config=None):
     app.register_blueprint(home.bp)
     app.add_url_rule('/', endpoint='index') # you can now use `url_for('index')` for `url_for('home.index')` because there is no url prefix for the home bp.
     
-    from . import specs 
-    app.register_blueprint(specs.bp)
+    from . import masters
+    app.register_blueprint(masters.bp)
 
     return app

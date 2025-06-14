@@ -1,12 +1,12 @@
 DROP TABLE IF EXISTS users;
-DROP TABLE IF EXISTS specs;
-DROP TABLE IF EXISTS spec_items;
-DROP TABLE IF EXISTS spec_details;
-DROP TABLE IF EXISTS spec_item_detail_relations;
-DROP TABLE IF EXISTS spec_item_relations;
-DROP TABLE IF EXISTS spec_detail_relations;
-DROP TABLE IF EXISTS spec_agents;
-DROP TABLE IF EXISTS spec_agent_relations;
+DROP TABLE IF EXISTS masters;
+DROP TABLE IF EXISTS master_items;
+DROP TABLE IF EXISTS master_details;
+DROP TABLE IF EXISTS master_item_detail_relations;
+DROP TABLE IF EXISTS master_item_relations;
+DROP TABLE IF EXISTS master_detail_relations;
+DROP TABLE IF EXISTS master_agents;
+DROP TABLE IF EXISTS master_agent_relations;
 
 CREATE TABLE users (
 	id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -14,17 +14,17 @@ CREATE TABLE users (
 	password TEXT NOT NULL
 );
 
-CREATE TABLE specs (
+CREATE TABLE masters (
 	id INTEGER PRIMARY KEY AUTOINCREMENT,
 	creator_id INTEGER NOT NULL,
 	created TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 	name TEXT NOT NULL,
-	spec_type INTEGER NOT NULL,
+	master_type INTEGER NOT NULL,
 	description TEXT,
 	FOREIGN KEY (creator_id) REFERENCES users (id)
 );
 
-CREATE TABLE spec_items (
+CREATE TABLE master_items (
 	id INTEGER PRIMARY KEY AUTOINCREMENT,
 	creator_id INTEGER NOT NULL,
 	created TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -32,7 +32,7 @@ CREATE TABLE spec_items (
 	FOREIGN KEY (creator_id) REFERENCES users (id)
 );
 
-CREATE TABLE spec_details (
+CREATE TABLE master_details (
 	id INTEGER PRIMARY KEY AUTOINCREMENT,
 	creator_id INTEGER NOT NULL,
 	created TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -41,32 +41,32 @@ CREATE TABLE spec_details (
 	FOREIGN KEY (creator_id) REFERENCES users (id)
 );
 
-CREATE TABLE spec_item_detail_relations (
+CREATE TABLE master_item_detail_relations (
 	id INTEGER PRIMARY KEY AUTOINCREMENT,
-	spec_item_id INTEGER NOT NULL,
-	spec_detail_id INTEGER NOT NULL,
+	master_item_id INTEGER NOT NULL,
+	master_detail_id INTEGER NOT NULL,
 	content TEXT,
-	FOREIGN KEY (spec_item_id) REFERENCES spec_items (id)
-	FOREIGN KEY (spec_detail_id) REFERENCES spec_details (id)
+	FOREIGN KEY (master_item_id) REFERENCES master_items (id)
+	FOREIGN KEY (master_detail_id) REFERENCES master_details (id)
 );
 
-CREATE TABLE spec_item_relations (
+CREATE TABLE master_item_relations (
 	id INTEGER PRIMARY KEY AUTOINCREMENT,
-	spec_id INTEGER NOT NULL,
-	item_id INTEGER NOT NULL,
-	FOREIGN KEY (spec_id) REFERENCES specs (id),
-	FOREIGN KEY (item_id) REFERENCES spec_items (id)
+	master_id INTEGER NOT NULL,
+	master_item_id INTEGER NOT NULL,
+	FOREIGN KEY (master_id) REFERENCES masters (id),
+	FOREIGN KEY (master_item_id) REFERENCES master_items (id)
 );
 
-CREATE TABLE spec_detail_relations (
+CREATE TABLE master_detail_relations (
 	id INTEGER PRIMARY KEY AUTOINCREMENT,
-	spec_id INTEGER NOT NULL,
-	detail_id INTEGER NOT NULL,
-	FOREIGN KEY (spec_id) REFERENCES specs (id),
-	FOREIGN KEY (detail_id) REFERENCES spec_details (id)
+	master_id INTEGER NOT NULL,
+	master_detail_id INTEGER NOT NULL,
+	FOREIGN KEY (master_id) REFERENCES masters (id),
+	FOREIGN KEY (master_detail_id) REFERENCES master_details (id)
 );
 
-CREATE TABLE spec_agents (
+CREATE TABLE master_agents (
 	id INTEGER PRIMARY KEY AUTOINCREMENT,
 	creator_id INTEGER NOT NULL,
 	created TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -78,10 +78,10 @@ CREATE TABLE spec_agents (
 	FOREIGN KEY (creator_id) REFERENCES users (id)
 );
 
-CREATE TABLE spec_agent_relations (
+CREATE TABLE master_agent_relations (
 	id INTEGER PRIMARY KEY AUTOINCREMENT,
-	spec_id INTEGER NOT NULL,
+	master_id INTEGER NOT NULL,
 	agent_id INTEGER NOT NULL,
-	FOREIGN KEY (spec_id) REFERENCES specs (id),
+	FOREIGN KEY (master_id) REFERENCES masters (id),
 	FOREIGN KEY (agent_id) REFERENCES agents (id)
 );

@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+
+{% block header %}
+<h1>{% block title %}Masters{% endblock %}</h1>
+{% if masters|length == 0 %}
+<p>Empty</p>
+{% endif %}
+<p><a href="{{ url_for('masters.new') }}">New</a></p>
+{% endblock %}
+{% block main %}
+{% for master in masters %}
+<article>
+	<h2>{{ master['name'] }} ({{ master['master_type'] }})</h2>
+	<p>{{ masters['description'] }}</p>
+	<p><b>Created: </b>{{ master['created'].strftime('%d.%m.%Y') }} | <a href="{{ url_for('masters.view', master_id=master['id']) }}">View</a> | <a href="{{ url_for('masters.edit', master_id=master['id']) }}">Edit</a></p>
+	{% if not loop.last %}
+	<hr>
+	{% endif %}
+</article>
+{% endfor %}
+{% endblock %}

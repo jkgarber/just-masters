@@ -57,3 +57,9 @@ p.human-1 {
 .flash-error {
 	color: red;
 }
+
+fieldset div {
+	display: grid;
+	grid-template-columns: 2fr 4fr;
+}
+
