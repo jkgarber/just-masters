@@ -11,8 +11,9 @@ bp = Blueprint('masters', __name__, url_prefix='/masters')
 @bp.route('/')
 @login_required
 def index():
-    masters = get_user_masters()
-    return render_template('masters/index.html', masters=masters)
+    list_masters = get_user_masters('List')
+    agent_masters = get_user_masters('Agent')
+    return render_template('masters/index.html', list_masters=list_masters, agent_masters=agent_masters)
 
 
 @bp.route('/new', methods=('GET', 'POST'))
@@ -27,6 +28,8 @@ def new():
             error = 'Name is required.'
         if not master_type:
             error = 'Type is required.'
+        if master_type not in ['List', 'Agent']:
+            error = 'Invalid master type.'
         if error is not None:
             flash(error)
         else:
@@ -49,13 +52,21 @@ def view(master_id):
     return '', 200
 
 
-def get_user_masters():
+@bp.route('/<int:master_id>/edit')
+@login_required
+def edit(master_id):
+    master = get_master(master_id)
+    return '', 200
+
+
+def get_user_masters(master_type):
     db = get_db()
     user_masters = db.execute(
-        'SELECT m.id, m.name, m.master_type, m.description, m.created'
+        'SELECT m.id, m.name, m.master_type, m.description, m.enabled, m.created'
         ' FROM masters m'
-        ' WHERE m.creator_id = ?',
-        (g.user['id'],)
+        ' WHERE m.creator_id = ?'
+        ' AND m.master_type = ?',
+        (g.user['id'], master_type)
     ).fetchall()
     return user_masters
 

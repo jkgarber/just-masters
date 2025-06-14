@@ -19,8 +19,9 @@ CREATE TABLE masters (
 	creator_id INTEGER NOT NULL,
 	created TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 	name TEXT NOT NULL,
-	master_type INTEGER NOT NULL,
+	master_type TEXT NOT NULL,
 	description TEXT,
+	enabled BOOLEAN NOT NULL DEFAULT FALSE,
 	FOREIGN KEY (creator_id) REFERENCES users (id)
 );
 
