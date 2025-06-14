@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+
+{% block header %}
+<h1>{% block title %}Specifications{% endblock %}</h1>
+{% if specs|length == 0 %}
+<p>Empty</p>
+{% endif %}
+<p><a href="{{ url_for('specs.create') }}">New</a></p>
+{% endblock %}
+{% block main %}
+{% for spec in specs %}
+<article>
+	<h2>{{ spec['name'] }}</h2>
+	<p>{{ spec['description'] }}</p>
+	<p><b>Created: </b>{{ spec['created'].strftime('%d.%m.%Y') }} | <a href="{{ url_for('specs.view', spec_id=spec['id']) }}">View</a> | <a href="{{ url_for('specs.edit', spec_id=spec['id']) }}">Edit</a></p>
+	{% if not loop.last %}
+	<hr>
+	{% endif %}
+</article>
+{% endfor %}
+{% endblock %}
