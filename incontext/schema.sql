@@ -21,7 +21,6 @@ CREATE TABLE masters (
 	name TEXT NOT NULL,
 	master_type TEXT NOT NULL,
 	description TEXT,
-	enabled BOOLEAN NOT NULL DEFAULT FALSE,
 	FOREIGN KEY (creator_id) REFERENCES users (id)
 );
 

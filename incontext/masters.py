@@ -62,7 +62,7 @@ def edit(master_id):
 def get_user_masters(master_type):
     db = get_db()
     user_masters = db.execute(
-        'SELECT m.id, m.name, m.master_type, m.description, m.enabled, m.created'
+        'SELECT m.id, m.name, m.master_type, m.description, m.created'
         ' FROM masters m'
         ' WHERE m.creator_id = ?'
         ' AND m.master_type = ?',
