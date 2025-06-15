@@ -18,8 +18,8 @@ CREATE TABLE masters (
 	id INTEGER PRIMARY KEY AUTOINCREMENT,
 	creator_id INTEGER NOT NULL,
 	created TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-	name TEXT NOT NULL,
 	master_type TEXT NOT NULL,
+	name TEXT NOT NULL,
 	description TEXT,
 	FOREIGN KEY (creator_id) REFERENCES users (id)
 );

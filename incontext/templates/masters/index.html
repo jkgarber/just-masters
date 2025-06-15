@@ -2,7 +2,6 @@
 
 {% block header %}
 <h1>{% block title %}Masters{% endblock %}</h1>
-<p><a href="{{ url_for('masters.new') }}">New</a></p>
 {% endblock %}
 {% block main %}
 <div class="masters-overview">
@@ -11,6 +10,7 @@
 		{% if list_masters|length == 0 %}
 		<p>Empty</p>
 		{% endif %}
+		<p><a href="{{ url_for('masters.new', master_type="list") }}">New List Master</a></p>
 		{% for list_master in list_masters %}
 		<article>
 			<h3>{{ list_master['name'] }}</h3>
@@ -27,6 +27,7 @@
 		{% if agent_masters|length == 0 %}
 		<p>Empty</p>
 		{% endif %}
+		<p><a href="{{ url_for('masters.new', master_type="agent") }}">New Agent Master</a></p>
 		{% for agent_master in agent_masters %}
 		<article>
 			<h3>{{ agent_master['name'] }}</h3>

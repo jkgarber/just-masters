@@ -1,0 +1,9 @@
+{% extends 'base.html' %}
+
+{% block header %}
+<h1>{% block title %}Master {{ master['master_type']|capitalize }}: {{ master['name'] }}{% endblock %}</h1>
+<p>{{ master['description'] }} <a href="{{ url_for('masters.edit', master_id=master['id']) }}">Edit</a></p>
+{% endblock %}
+{% block main %}
+{{ master }}
+{% endblock %}
