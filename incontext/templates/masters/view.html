@@ -3,7 +3,15 @@
 {% block header %}
 <h1>{% block title %}Master {{ master['master_type']|capitalize }}: {{ master['name'] }}{% endblock %}</h1>
 <p>{{ master['description'] }} <a href="{{ url_for('masters.edit', master_id=master['id']) }}">Edit</a></p>
+<p><b>Created:</b> {{ master['created'].strftime('%d.%m.%Y') }}</p>
 {% endblock %}
 {% block main %}
 {{ master }}
+<section id="items">
+	<h2>Items</h2>
+{% if master['items']|length == 0 %}
+	<p>Empty</p>
+	<a href="{{ url_for('masters.new_item', master_id=master['id']) }}">New Item</a>
+</section>
+{% endif %}
 {% endblock %}

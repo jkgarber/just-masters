@@ -64,6 +64,13 @@ def edit(master_id):
     return '', 200
 
 
+@bp.route('<int:master_id>/items/new')
+@login_required
+def new_item(master_id):
+    master = get_master(master_id)
+    return '', 200
+
+
 def get_user_masters(master_type):
     db = get_db()
     user_masters = db.execute(
