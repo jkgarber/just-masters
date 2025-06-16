@@ -86,7 +86,36 @@ def edit(master_id):
 @login_required
 def delete(master_id):
     master = get_master(master_id)
-    return "TODO", 200
+    db = get_db()
+    # Delete master-related details
+    db.execute(
+        'DELETE FROM master_details'
+        ' WHERE id IN'
+        ' (SELECT master_detail_id FROM master_detail_relations WHERE master_id = ?)',
+        (master_id,)
+    )
+    # Delete master-related items
+    db.execute(
+        'DELETE FROM master_items'
+        ' WHERE id IN'
+        ' (SELECT master_item_id FROM master_item_relations WHERE master_id = ?)',
+        (master_id,)
+    )
+    # Delete item-detail relations
+    db.execute(
+        'DELETE FROM master_item_detail_relations'
+        ' WHERE master_item_id IN'
+        ' (SELECT master_item_id FROM master_item_relations WHERE master_id = ?)',
+        (master_id,)
+    )
+    # Delete master-item relations
+    db.execute('DELETE FROM master_item_relations WHERE master_id = ?',(master_id,))
+    # Delete master-detail relations
+    db.execute('DELETE FROM master_detail_relations WHERE master_id = ?', (master_id,))
+    # Delete master
+    db.execute('DELETE FROM masters WHERE id = ?', (master_id,))
+    db.commit()
+    return redirect(url_for('masters.index'))
 
 
 @bp.route('<int:master_id>/items/new', methods=("GET", "POST"))
