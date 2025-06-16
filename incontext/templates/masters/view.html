@@ -31,7 +31,7 @@
 			{% else %}
 			<td>{{ item['name'] }}</td>
 			{% endif %}
-			{% for content in master['contents'] %}
+			{% for content in item['contents'] %}
 			{% if content|length > 30 %}
 			<td>{{ content|truncate(30,false,'...') }}</td>
 			{% else %}
@@ -44,6 +44,21 @@
 		</tr>
 		{% endfor %}
 	</table>
+{% endif %}
+</section>
+<section id="details">
+	<h2>Details</h2>
+{% if master["details"]|length == 0 %}
+	<p>Empty</p>
+	<a href="{{ url_for('masters.new_detail', master_id=master['id']) }}">New Detail</a>
+{% else %}
+	<a href="{{ url_for('masters.new_detail', master_id=master['id']) }}">New Detail</a>
+	<dl>
+		{% for detail in master["details"] %}
+		<dt><b>{{ detail['name'] }}</b> <a href="{{ url_for('masters.edit_detail', master_id=master['id'], detail_id=detail['id']) }}">Edit</a></dt>
+		<dd>{{ detail['description'] }}</dd>
+		{% endfor %}
+	</dl>
 {% endif %}
 </section>
 {% endblock %}

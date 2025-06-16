@@ -157,6 +157,56 @@ def edit_item(master_id, item_id):
     return render_template("masters/items/edit.html", master=master, item=requested_item)
 
 
+@bp.route("/<int:master_id>/details/new", methods=("GET", "POST"))
+@login_required
+def new_detail(master_id):
+    master = get_master(master_id)
+    if request.method == "POST":
+        name = request.form['name']
+        description = request.form['description']
+        error = None
+        if not name:
+            error = 'Name is required.'
+        if error is not None:
+            flash(error)
+        else:
+            db = get_db()
+            cur = db.cursor()
+            cur.execute(
+                'INSERT INTO master_details (name, description, creator_id)'
+                ' VALUES (?, ?, ?)',
+                (name, description, g.user['id'])
+            )
+            detail_id = cur.lastrowid
+            cur.execute(
+                'INSERT INTO master_detail_relations (master_id, master_detail_id)'
+                ' VALUES (?, ?)',
+                (master_id, detail_id)
+            )
+            master_items = master["items"]
+            data = [(item['id'], detail_id, '') for item in master_items]
+            cur.executemany(
+                'INSERT INTO master_item_detail_relations (master_item_id, master_detail_id, content)'
+                'VALUES (?, ?, ?)',
+                data
+            )
+            db.commit()
+            return redirect(url_for('masters.view', master_id=master["id"]))
+    return render_template("masters/details/new.html", master=master)
+
+
+@bp.route("/<int:master_id>/details/<int:detail_id>/edit", methods=("GET", "POST"))
+@login_required
+def edit_detail(master_id, detail_id):
+    master = get_master(master_id)
+    requested_detail = next((detail for detail in master["details"] if detail["id"] == detail_id), None)
+    if requested_detail is None:
+        abort(404)
+    if request.method == "POST":
+        return "", 200
+    return render_template("masters/details/edit.html", master=master, detail=requested_detail)
+
+
 def get_user_masters(master_type):
     db = get_db()
     user_masters = db.execute(
@@ -223,5 +273,6 @@ def get_master(master_id, check_access=True):
         ).fetchall()
         for content in contents:
             item_id = content['master_item_id']
-            list_master['items'][item_id]['contents'].append(content['content'])
+            item = next((item for item in list_master["items"] if item["id"] == item_id), None)
+            item['contents'].append(content['content'])
         return list_master
