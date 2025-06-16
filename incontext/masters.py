@@ -245,8 +245,35 @@ def edit_detail(master_id, detail_id):
     if requested_detail is None:
         abort(404)
     if request.method == "POST":
-        return "", 200
+        name = request.form['name']
+        description = request.form['description']
+        error = None
+        if not name:
+            error = 'Name is required.'
+        if error is not None:
+            flash(error)
+        else:
+            db = get_db()
+            db.execute(
+                'UPDATE master_details SET name = ?, description = ?'
+                ' WHERE id = ?',
+                (name, description, detail_id)
+            )
+            db.commit()
+            return redirect(url_for('masters.view', master_id=master_id))
     return render_template("masters/details/edit.html", master=master, detail=requested_detail)
+
+
+@bp.route('/<int:master_id>/details/<int:detail_id>/delete', methods=('POST',))
+@login_required
+def delete_detail(master_id, detail_id):
+    master = get_master(master_id)
+    db = get_db()
+    db.execute('DELETE FROM master_details WHERE id = ?', (detail_id,))
+    db.execute('DELETE FROM master_item_detail_relations WHERE master_detail_id = ?', (detail_id,))
+    db.execute('DELETE FROM master_detail_relations WHERE detail_id = ?', (detail_id,))
+    db.commit()
+    return redirect(url_for('masters.view', master_id=master_id))
 
 
 def get_user_masters(master_type):
