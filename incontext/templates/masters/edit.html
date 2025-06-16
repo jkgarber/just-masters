@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+
+{% block header %}
+<h1>{% block title %}Edit {{ master["master_type"]|capitalize }} Master: {{ master['name'] }}{% endblock %}</h1>
+<p><b>Created:</b> {{ master["created"].strftime("%d.%m.%Y") }}</p>
+{% endblock %}
+	
+{% block main %}
+<form method="post">
+	<label for="name">Name
+		<input id="name" name="name" value="{{ request.form['name'] or master['name'] }}" autofocus required>
+	</label>
+	<label for="description">Description
+		<textarea id="description" name="description">{{ request.form['description'] or master['description'] }}</textarea>
+	</label>
+	<input type="submit" value="Save">
+</form>
+<hr>
+<form method="post" action="{{ url_for('masters.delete', master_id=master['id']) }}">
+	<input type="submit" value="Delete">
+</form>
+{% endblock %}

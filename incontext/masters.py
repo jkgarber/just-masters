@@ -57,11 +57,35 @@ def view(master_id):
         abort(404)
 
 
-@bp.route('/<int:master_id>/edit')
+@bp.route('/<int:master_id>/edit', methods=('GET', 'POST'))
 @login_required
 def edit(master_id):
     master = get_master(master_id)
-    return '', 200
+    if request.method == "POST":
+        name = request.form['name']
+        description = request.form['description']
+        error = None
+        if not name:
+            error = 'Name is required.'
+        if error is not None:
+            flash(error)
+        else:
+            db = get_db()
+            db.execute(
+                'UPDATE masters SET name = ?, description = ?'
+                ' WHERE id = ?',
+                (name, description, master_id)
+            )
+            db.commit()
+            return redirect(url_for('masters.index'))
+    return render_template("masters/edit.html", master=master)
+
+
+@bp.route("<int:master_id>/delete", methods=("POST",))
+@login_required
+def delete(master_id):
+    master = get_master(master_id)
+    return "TODO", 200
 
 
 @bp.route('<int:master_id>/items/new')
