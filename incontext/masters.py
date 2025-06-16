@@ -271,7 +271,7 @@ def delete_detail(master_id, detail_id):
     db = get_db()
     db.execute('DELETE FROM master_details WHERE id = ?', (detail_id,))
     db.execute('DELETE FROM master_item_detail_relations WHERE master_detail_id = ?', (detail_id,))
-    db.execute('DELETE FROM master_detail_relations WHERE detail_id = ?', (detail_id,))
+    db.execute('DELETE FROM master_detail_relations WHERE master_detail_id = ?', (detail_id,))
     db.commit()
     return redirect(url_for('masters.view', master_id=master_id))
 
