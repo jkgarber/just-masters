@@ -148,13 +148,55 @@ def view_item(master_id, item_id):
 @login_required
 def edit_item(master_id, item_id):
     master = get_master(master_id)
-    requested_item = None
-    for item in master["items"]:
-        if item["id"] == item_id:
-            requested_item = item
+    requested_item = next((item for item in master["items"] if item["id"] == item_id), None)
     if request.method == "POST":
-        return "", 200
+        name = request.form['name']
+        detail_fields = []
+        details = [detail for detail in master['details']]
+        for detail in details:
+            detail_id = detail['id']
+            detail_content = request.form[str(detail_id)]
+            detail_fields.append((detail_content, item_id, detail_id))
+        error = None
+        if not name:
+            error = 'Name is required.'
+        if error is not None:
+            flash(error)
+        else:
+            db = get_db()
+            db.execute(
+                'UPDATE master_items SET name = ?'
+                ' WHERE id = ?',
+                (name, item_id)
+            )
+            db.executemany(
+                'UPDATE master_item_detail_relations'
+                ' SET content = ?'
+                ' WHERE master_item_id = ?'
+                ' AND master_detail_id = ?',
+                detail_fields
+            )
+            db.commit()
+            return redirect(url_for('masters.view', master_id=master_id))
     return render_template("masters/items/edit.html", master=master, item=requested_item)
+
+
+@bp.route("<int:master_id>/items/<int:item_id>/delete", methods=("POST",))
+@login_required
+def delete_item(master_id, item_id):
+    master = get_master(master_id)
+    requested_item = next((item for item in master["items"] if item["id"] == item_id), None)
+    details = master["details"]
+    db = get_db()
+    db.execute('DELETE FROM master_items WHERE id = ?', (item_id,))
+    db.execute('DELETE FROM master_item_detail_relations WHERE master_item_id = ?', (item_id,))
+    db.execute(
+        'DELETE from master_item_relations'
+        ' WHERE master_id = ? AND master_item_id = ?',
+        (master_id, item_id)
+    )
+    db.commit()
+    return redirect(url_for('masters.view', master_id=master_id))
 
 
 @bp.route("/<int:master_id>/details/new", methods=("GET", "POST"))
