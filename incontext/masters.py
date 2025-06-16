@@ -49,6 +49,7 @@ def new(master_type):
 @login_required
 def view(master_id):
     master = get_master(master_id)
+    print(master)
     if master['master_type'] == 'list':
         return render_template('masters/view.html', master=master)
     elif master['master_type'] == 'agent':
@@ -88,11 +89,72 @@ def delete(master_id):
     return "TODO", 200
 
 
-@bp.route('<int:master_id>/items/new')
+@bp.route('<int:master_id>/items/new', methods=("GET", "POST"))
 @login_required
 def new_item(master_id):
     master = get_master(master_id)
-    return '', 200
+    if request.method == "POST":
+        name = request.form['name']
+        detail_fields = []
+        details = [detail for detail in master['details']]
+        for detail in details:
+            detail_id = detail['id']
+            detail_content = request.form[str(detail_id)]
+            detail_fields.append((detail_id, detail_content))
+        error = None
+        if not name:
+            error = 'Name is required.'
+        if error is not None:
+            flash(error)
+        else:
+            db = get_db()
+            cur = db.cursor()
+            cur.execute(
+                'INSERT INTO master_items (name, creator_id)'
+                ' VALUES (?, ?)',
+                (name, g.user['id'])
+            )
+            item_id = cur.lastrowid
+            cur.execute(
+                'INSERT INTO master_item_relations (master_id, master_item_id)'
+                ' VALUES (?, ?)',
+                (master_id, item_id)
+            )
+            relations = []
+            for field in detail_fields:
+                relations.append((item_id,) + field)
+            cur.executemany(
+                'INSERT INTO master_item_detail_relations (master_item_id, master_detail_id, content)'
+                ' VALUES(?, ?, ?)',
+                relations
+            )
+            db.commit()
+            return redirect(url_for('masters.view', master_id=master_id))
+    return render_template("masters/items/new.html", master=master)
+
+
+@bp.route("<int:master_id>/items/<int:item_id>/view")
+@login_required
+def view_item(master_id, item_id):
+    master = get_master(master_id)
+    requested_item = None
+    for item in master['items']:
+        if item['id'] == item_id:
+            requested_item = item
+    return render_template("masters/items/view.html", item=requested_item, details=master["details"])
+
+
+@bp.route("<int:master_id>/items/<int:item_id>/edit", methods=("GET", "POST"))
+@login_required
+def edit_item(master_id, item_id):
+    master = get_master(master_id)
+    requested_item = None
+    for item in master["items"]:
+        if item["id"] == item_id:
+            requested_item = item
+    if request.method == "POST":
+        return "", 200
+    return render_template("masters/items/edit.html", master=master, item=requested_item)
 
 
 def get_user_masters(master_type):
@@ -132,14 +194,15 @@ def get_master(master_id, check_access=True):
             ' WHERE m.master_id = ?',
             (master_id,)
         ).fetchall()
-        list_master['items'] = {}
+        list_master['items'] = []
         for item in items:
             new_item = {}
-            for key in item:
+            for key in item.keys():
                 new_item[key] = item[key]
             new_item['contents'] = []
             item_id = str(item['id'])
-            last_master['items'][item_id] = new_item
+            # list_master['items'][item_id] = new_item
+            list_master['items'].append(new_item)
         details = db.execute(
             'SELECT d.id, d.name, d.description'
             ' FROM master_details d'
