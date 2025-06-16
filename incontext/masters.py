@@ -141,7 +141,7 @@ def view_item(master_id, item_id):
     for item in master['items']:
         if item['id'] == item_id:
             requested_item = item
-    return render_template("masters/items/view.html", item=requested_item, details=master["details"])
+    return render_template("masters/items/view.html", master=master, item=requested_item, details=master["details"])
 
 
 @bp.route("<int:master_id>/items/<int:item_id>/edit", methods=("GET", "POST"))
@@ -279,10 +279,12 @@ def get_master(master_id, check_access=True):
         for key in master.keys():
             list_master[key] = master[key]
         items = db.execute(
-            'SELECT i.id, i.name, i.created'
+            'SELECT i.id, i.name, i.created, u.username'
             ' FROM master_items i'
             ' JOIN master_item_relations m'
             ' ON m.master_item_id = i.id'
+            ' JOIN users u'
+            ' ON u.id = i.creator_id'
             ' WHERE m.master_id = ?',
             (master_id,)
         ).fetchall()
