@@ -1,12 +1,12 @@
 {% extends 'base.html' %}
 
 {% block header %}
-<h1>{% block title %}Master {{ master['master_type']|capitalize }}: {{ master['name'] }}{% endblock %}</h1>
+<h1>{% block title %}{{ master['master_type']|capitalize }} Master: {{ master['name'] }}{% endblock %}</h1>
 <p>{{ master['description'] }} <a href="{{ url_for('masters.edit', master_id=master['id']) }}">Edit</a></p>
 <p><b>Created:</b> {{ master['created'].strftime('%d.%m.%Y') }}</p>
 {% endblock %}
 {% block main %}
-{{ master }}
+{% if master["master_type"] == "list" %}
 <section id="items">
 	<h2>Items</h2>
 {% if master['items']|length == 0 %}
@@ -61,4 +61,17 @@
 	</dl>
 {% endif %}
 </section>
+{% elif master["master_type"] == "agent" %}
+<section>
+	<h2>Attributes</h2>
+	<ul>
+		<li><b>Creator: </b>{{ master['username'] }}</li>
+		<li><b>Name: </b>{{ master['name'] }}</li>
+		<li><b>Model: </b>{{ master['model'] }}</li>
+		<li><b>Vendor: </b>{{ master["vendor"] }}</li>
+		<li><b>Role: </b>{{ master['role'] }}</li>
+		<li><b>Instructions: </b>{{ master["instructions"] }}</li>
+	</ul>
+</section>
+{% endif %}
 {% endblock %}

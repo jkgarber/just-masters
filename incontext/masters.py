@@ -84,13 +84,7 @@ def new(master_type):
 @login_required
 def view(master_id):
     master = get_master(master_id)
-    print(master)
-    if master['master_type'] == 'list':
-        return render_template('masters/view.html', master=master)
-    elif master['master_type'] == 'agent':
-        abort(404) # TODO
-    else:
-        abort(404)
+    return render_template('masters/view.html', master=master)
 
 
 @bp.route('/<int:master_id>/edit', methods=('GET', 'POST'))
@@ -386,7 +380,6 @@ def get_master(master_id, check_access=True):
                 new_item[key] = item[key]
             new_item['contents'] = []
             item_id = str(item['id'])
-            # list_master['items'][item_id] = new_item
             list_master['items'].append(new_item)
         details = db.execute(
             'SELECT d.id, d.name, d.description'
@@ -411,3 +404,14 @@ def get_master(master_id, check_access=True):
             item = next((item for item in list_master["items"] if item["id"] == item_id), None)
             item['contents'].append(content['content'])
         return list_master
+    elif master["master_type"] == "agent":
+        agent_master = db.execute(
+            "SELECT m.master_type, u.username, m.id, m.created, m.name, m.description, a.model, a.role, a.instructions, a.vendor"
+            " FROM masters m"
+            " JOIN users u ON u.id = m.creator_id"
+            " JOIN master_agent_relations r ON r.master_id = m.id"
+            " JOIN master_agents a ON a.id = r.master_agent_id"
+            " WHERE m.id = ?",
+            (master_id,)
+        ).fetchone()
+        return agent_master
