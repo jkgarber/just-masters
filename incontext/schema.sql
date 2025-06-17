@@ -71,7 +71,6 @@ CREATE TABLE master_agents (
 	creator_id INTEGER NOT NULL,
 	created TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 	model TEXT NOT NULL,
-	name TEXT NOT NULL,
 	role TEXT NOT NULL,
 	instructions TEXT NOT NULL,
 	vendor TEXT NOT NULL,
@@ -81,7 +80,7 @@ CREATE TABLE master_agents (
 CREATE TABLE master_agent_relations (
 	id INTEGER PRIMARY KEY AUTOINCREMENT,
 	master_id INTEGER NOT NULL,
-	agent_id INTEGER NOT NULL,
+	master_agent_id INTEGER NOT NULL,
 	FOREIGN KEY (master_id) REFERENCES masters (id),
-	FOREIGN KEY (agent_id) REFERENCES agents (id)
+	FOREIGN KEY (master_agent_id) REFERENCES agents (id)
 );

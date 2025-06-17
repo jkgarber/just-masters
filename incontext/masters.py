@@ -22,9 +22,9 @@ def new(master_type):
     if master_type not in ['list', 'agent']:
         abort(404)
     if request.method == 'POST':
+        name = request.form['name']
+        description = request.form['description']
         if master_type == 'list':
-            name = request.form['name']
-            description = request.form['description']
             error = None
             if not name:
                 error = 'Name is required.'
@@ -40,8 +40,43 @@ def new(master_type):
                 db.commit()
                 return redirect(url_for('masters.index'))
         elif master_type == 'agent':
-            abort(404) # TODO
-
+            description = request.form["description"]
+            model = request.form['model']
+            role = request.form['role']
+            instructions = request.form['instructions']
+            error = None
+            if not model or not name or not role or not instructions:
+                error = 'Model, name, role, and instructions are all required.'
+            if error is not None:
+                flash(error)
+            else:
+                if model in ['gpt-4.1-mini', 'gpt-4.1']:
+                    vendor = 'openai'
+                elif model in ['claude-3-5-haiku-latest', 'claude-3-7-sonnet-latest']:
+                    vendor = 'anthropic'
+                else:
+                    vendor = 'google'
+                db = get_db()
+                cur = db.cursor()
+                cur.execute(
+                    'INSERT INTO masters (master_type, name, description, creator_id)'
+                    ' VALUES (?, ?, ?, ?)',
+                    (master_type, name, description, g.user["id"])
+                )
+                master_id = cur.lastrowid
+                cur.execute(
+                    'INSERT INTO master_agents (model, role, instructions, creator_id, vendor)'
+                    ' VALUES (?, ?, ?, ?, ?)',
+                    (model, role, instructions, g.user['id'], vendor)
+                )
+                master_agent_id = cur.lastrowid
+                cur.execute(
+                    "INSERT INTO master_agent_relations (master_id, master_agent_id)"
+                    " VALUES (?, ?)",
+                    (master_id, master_agent_id)
+                )
+                db.commit()
+                return redirect(url_for('masters.index'))
     return render_template('masters/new.html', master_type=master_type)
 
 

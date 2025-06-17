@@ -17,6 +17,9 @@
 </form>
 {% elif master_type == "agent" %}
 <form method="post">
+	<label for="description">Description
+		<textarea name="description" id="description" required>{{ request.form['description'] }}</textarea>
+	</label>
 	<label for="model">Model
 		<select name="model" id="model" required autofocus>
 			<option value="gpt-4.1-mini">ChatGPT 4.1 mini</option>
