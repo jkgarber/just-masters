@@ -97,6 +97,12 @@ def edit(master_id):
         error = None
         if not name:
             error = 'Name is required.'
+        if master["master_type"] == "agent":
+            model = request.form["model"]
+            role = request.form["role"]
+            instructions = request.form["instructions"]
+            if not model or not role or not instructions:
+                error = "Model, name, role, and instructions are all required."
         if error is not None:
             flash(error)
         else:
@@ -106,6 +112,19 @@ def edit(master_id):
                 ' WHERE id = ?',
                 (name, description, master_id)
             )
+            if master["master_type"] == "agent":
+                if model in ['gpt-4.1-mini', 'gpt-4.1']:
+                    vendor = 'openai'
+                elif model in ['claude-3-5-haiku-latest', 'claude-3-7-sonnet-latest']:
+                    vendor = 'anthropic'
+                else:
+                    vendor = 'google'
+                db.execute(
+                    "UPDATE master_agents"
+                    " SET model = ?, role = ?, instructions = ?, vendor = ?"
+                    " WHERE id = ?",
+                    (model, role, instructions, vendor, master["master_agent_id"])
+                )
             db.commit()
             return redirect(url_for('masters.index'))
     return render_template("masters/edit.html", master=master)
@@ -406,7 +425,7 @@ def get_master(master_id, check_access=True):
         return list_master
     elif master["master_type"] == "agent":
         agent_master = db.execute(
-            "SELECT m.master_type, u.username, m.id, m.created, m.name, m.description, a.model, a.role, a.instructions, a.vendor"
+            "SELECT m.master_type, u.username, m.id, m.created, m.name, m.description, a.model, a.role, a.instructions, a.vendor, a.id as master_agent_id"
             " FROM masters m"
             " JOIN users u ON u.id = m.creator_id"
             " JOIN master_agent_relations r ON r.master_id = m.id"
