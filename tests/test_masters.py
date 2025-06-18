@@ -201,7 +201,7 @@ def test_delete_list_master(app, client, auth):
     # user must be master creator
     auth.login('other', 'other')
     assert client.post('masters/1/delete').status_code == 403
-    # master gets deleted
+    # list master gets deleted
     auth.login()
     with app.app_context():
         db = get_db()
@@ -286,6 +286,9 @@ def test_delete_list_master(app, client, auth):
     response = client.post('masters/2/delete')
     assert response.status_code == 302
     assert response.headers['Location'] == '/masters/'
+    # list master must exist
+    response = client.post("masters/8/delete")
+    assert response.status_code == 404
 
 
 def test_new_master_item(app, client, auth):
@@ -801,6 +804,44 @@ def test_edit_agent_master(app, client, auth):
         assert masters_after[5:] == masters_before[5:]
         assert masters_after[4]['name'] == 'master name 5 updated'
         assert masters_after[4]['description'] == 'master description 5 updated'
+        assert master_agents_after[1:] == master_agents_before[1:]
+        assert master_agents_after[0] != master_agents_before[0]
+        assert master_agents_after[0]["model"] == "gemini-2.0-flash"
+        assert master_agents_after[0]["role"] == "Testing Agent Updated"
+        assert master_agent_relations_after == master_agent_relations_before
+        assert "updated" in master_agents_after[0]["instructions"]
     # redirected to masters.index
     assert response.status_code == 302
     assert response.headers['Location'] == '/masters/'
+
+
+def test_delete_agent_master(client, auth, app):
+    # user must be logged in
+    response = client.post("/masters/5/delete")
+    assert response.status_code == 302
+    assert response.headers["Location"] == "/auth/login"
+    # user must have permission
+    auth.login('other', 'other')
+    response = client.post("masters/5/delete")
+    assert response.status_code == 403
+    # agent master gets deleted and others are unaffected.
+    auth.login()
+    with app.app_context():
+        db = get_db()
+        masters_before = db.execute("SELECT * FROM masters").fetchall()
+        master_agents_before = db.execute("SELECT * FROM master_agents").fetchall()
+        master_agent_relations_before = db.execute("SELECT * FROM master_agent_relations").fetchall()
+        response = client.post("masters/5/delete")
+        masters_after = db.execute('SELECT * FROM masters').fetchall()
+        master_agents_after = db.execute("SELECT * FROM master_agents").fetchall()
+        master_agent_relations_after = db.execute("SELECT * FROM master_agent_relations").fetchall()
+        assert masters_after[:4] == masters_before[:4]
+        assert masters_after[4:] == masters_before[5:]
+        assert len(masters_after) == len(masters_before) - 1
+        assert master_agents_after ==  master_agents_before[1:]
+        assert len(master_agents_after) == len(master_agents_before) - 1
+        assert master_agent_relations_after == master_agent_relations_before[1:]
+        assert len(master_agent_relations_after) == len(master_agent_relations_before) - 1
+    # redirected to lists.index
+    assert response.status_code == 302
+    assert response.headers["Location"] == "/masters/"
