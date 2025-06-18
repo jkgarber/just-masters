@@ -24,8 +24,8 @@ def new(master_type):
     if request.method == 'POST':
         name = request.form['name']
         description = request.form['description']
+        error = None
         if master_type == 'list':
-            error = None
             if not name:
                 error = 'Name is required.'
             if error is not None:
@@ -42,20 +42,22 @@ def new(master_type):
         elif master_type == 'agent':
             description = request.form["description"]
             model = request.form['model']
+            vendor = None
+            if model in ['gpt-4.1-mini', 'gpt-4.1']:
+                vendor = 'openai'
+            elif model in ['claude-3-5-haiku-latest', 'claude-3-7-sonnet-latest']:
+                vendor = 'anthropic'
+            elif model in ["gemini-2.0-flash", "gemini-2.0-flash-lite", "gemini-1.5-flash", "gemini-1.5-flash-8b", "gemini-1.5-pro"]:
+                vendor = 'google'
+            else:
+                error = "Model not recognized as a supported model."
             role = request.form['role']
             instructions = request.form['instructions']
-            error = None
             if not model or not name or not role or not instructions:
                 error = 'Model, name, role, and instructions are all required.'
             if error is not None:
                 flash(error)
             else:
-                if model in ['gpt-4.1-mini', 'gpt-4.1']:
-                    vendor = 'openai'
-                elif model in ['claude-3-5-haiku-latest', 'claude-3-7-sonnet-latest']:
-                    vendor = 'anthropic'
-                else:
-                    vendor = 'google'
                 db = get_db()
                 cur = db.cursor()
                 cur.execute(
@@ -102,6 +104,14 @@ def edit(master_id):
                 error = "Model, name, role, and instructions are all required."
         if master["master_type"] == "agent":
             model = request.form["model"]
+            if model in ['gpt-4.1-mini', 'gpt-4.1']:
+                vendor = 'openai'
+            elif model in ['claude-3-5-haiku-latest', 'claude-3-7-sonnet-latest']:
+                vendor = 'anthropic'
+            elif model in ["gemini-2.0-flash", "gemini-2.0-flash-lite", "gemini-1.5-flash", "gemini-1.5-flash-8b", "gemini-1.5-pro"]:
+                vendor = 'google'
+            else:
+                error = "Model not recognized as a supported model."
             role = request.form["role"]
             instructions = request.form["instructions"]
             if not model or not role or not instructions:
@@ -116,12 +126,6 @@ def edit(master_id):
                 (name, description, master_id)
             )
             if master["master_type"] == "agent":
-                if model in ['gpt-4.1-mini', 'gpt-4.1']:
-                    vendor = 'openai'
-                elif model in ['claude-3-5-haiku-latest', 'claude-3-7-sonnet-latest']:
-                    vendor = 'anthropic'
-                else:
-                    vendor = 'google'
                 db.execute(
                     "UPDATE master_agents"
                     " SET model = ?, role = ?, instructions = ?, vendor = ?"

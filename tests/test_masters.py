@@ -58,17 +58,23 @@ def test_new_master(app, client, auth):
     # data validation (agent master)
     response = client.post(
         "masters/new/agent",
-        data={"name": "", "description": "master description 9", "model": "gemini-1.5-pro", "role": "Testing Agent", "instructions": "Reply with one word: 'Working'"}
+        data={"name": "", "description": "master description 9", "model": "gemini-1.5-pro", "role": "Testing Agent", "instructions": "Reply with one word: 'Working'. 4"}
     )
     assert b'Model, name, role, and instructions are all required.' in response.data
     response = client.post(
         "masters/new/agent",
-        data={"name": "master name 9", "description": "master description 9", "model": "", "role": "Testing Agent", "instructions": "Reply with one word: 'Working'"}
+        data={"name": "master name 9", "description": "master description 9", "model": "", "role": "Testing Agent", "instructions": "Reply with one word: 'Working'. 4"}
     )
     assert b'Model, name, role, and instructions are all required.' in response.data
+    # invalid model
     response = client.post(
         "masters/new/agent",
-        data={"name": "master name 9", "description": "master description 9", "model": "gemini-1.5-pro", "role": "", "instructions": "Reply with one word: 'Working'"}
+        data={"name": "master name 9", "description": "master description 9", "model": "blah", "role": "Testing Agent", "instructions": "Reply with one word: 'Working'. 4"}
+    )
+    assert b'Model not recognized as a supported model.' in response.data
+    response = client.post(
+        "masters/new/agent",
+        data={"name": "master name 9", "description": "master description 9", "model": "gemini-1.5-pro", "role": "", "instructions": "Reply with one word: 'Working'. 4"}
     )
     assert b'Model, name, role, and instructions are all required.' in response.data
     response = client.post(
@@ -79,7 +85,7 @@ def test_new_master(app, client, auth):
     # agent master is saved to database
     response = client.post(
         'masters/new/agent',
-        data = {'name': 'master name 9', 'description': 'master description 9', "model": "gemini-1.5-pro", "role": "Testing Agent 9", "instructions": "Reply with one word: 'Working'. 9"},
+        data = {'name': 'master name 9', 'description': 'master description 9', "model": "gemini-1.5-pro", "role": "Testing Agent 9", "instructions": "Reply with one word: 'Working'. 4"},
     )
     with app.app_context():
         db = get_db()
@@ -93,7 +99,7 @@ def test_new_master(app, client, auth):
         new_master_agent = master_agents[-1]
         assert new_master_agent["model"] == "gemini-1.5-pro"
         assert new_master_agent["role"] == "Testing Agent 9"
-        assert new_master_agent["instructions"] == "Reply with one word: 'Working'. 9"
+        assert new_master_agent["instructions"] == "Reply with one word: 'Working'. 4"
         assert new_master_agent["vendor"] == "google"
         master_agent_relations = db.execute(
             "SELECT * FROM master_agent_relations"
@@ -104,6 +110,20 @@ def test_new_master(app, client, auth):
     # redirected to masters.index
     assert response.status_code == 302
     assert response.headers['Location'] == '/masters/'
+    # must be a valid master type
+    assert client.get("/masters/new/blah").status_code == 404
+    assert client.post("/masters/new/blah").status_code == 404
+    # test other model providers
+    response = client.post( # openai
+        'masters/new/agent',
+        data = {'name': 'master name 10', 'description': 'master description 10', "model": "gpt-4.1-mini", "role": "Testing Agent 10", "instructions": "Reply with one word: 'Working'. 10"},
+    )
+    assert response.status_code == 302
+    response = client.post( # anthropic
+        'masters/new/agent',
+        data = {'name': 'master name 10', 'description': 'master description 10', "model": "claude-3-5-haiku-latest", "role": "Testing Agent 10", "instructions": "Reply with one word: 'Working'. 10"},
+    )
+    assert response.status_code == 302
 
 
 def test_view_list_master(app, client, auth):
@@ -770,6 +790,12 @@ def test_edit_agent_master(app, client, auth):
         data={"name": "master name 9", "description": "master description 9", "model": "", "role": "Testing Agent", "instructions": "Reply with one word: 'Working'"}
     )
     assert b'Model, name, role, and instructions are all required.' in response.data
+    # invalid model
+    response = client.post(
+        "masters/5/edit",
+        data={"name": "master name 9", "description": "master description 9", "model": "blah", "role": "Testing Agent", "instructions": "Reply with one word: 'Working'"}
+    )
+    assert b'Model not recognized as a supported model.' in response.data
     response = client.post(
         "masters/5/edit",
         data={"name": "master name 9", "description": "master description 9", "model": "gemini-1.5-pro", "role": "", "instructions": "Reply with one word: 'Working'"}
@@ -813,6 +839,17 @@ def test_edit_agent_master(app, client, auth):
     # redirected to masters.index
     assert response.status_code == 302
     assert response.headers['Location'] == '/masters/'
+    # test other model providers
+    response = client.post( # openai
+        'masters/5/edit',
+        data = {'name': 'master name 5', 'description': 'master description 5', "model": "gpt-4.1", "role": "Testing Agent 5", "instructions": "Reply with one word: 'Working'. 1"},
+    )
+    assert response.status_code == 302
+    response = client.post( # anthropic
+        'masters/5/edit',
+        data = {'name': 'master name 5', 'description': 'master description 5', "model": "claude-3-5-haiku-latest", "role": "Testing Agent 5", "instructions": "Reply with one word: 'Working'. 1"},
+    )
+    assert response.status_code == 302
 
 
 def test_delete_agent_master(client, auth, app):
