@@ -96,7 +96,10 @@ def edit(master_id):
         description = request.form['description']
         error = None
         if not name:
-            error = 'Name is required.'
+            if master["master_type"] == "list":
+                error = 'Name is required.'
+            elif master["master_type"] == "agent":
+                error = "Model, name, role, and instructions are all required."
         if master["master_type"] == "agent":
             model = request.form["model"]
             role = request.form["role"]

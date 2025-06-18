@@ -19,6 +19,14 @@ def test_index(client, auth):
     assert b'master description 3' not in response.data
     assert b'master name 4' not in response.data
     assert b'master description 4' not in response.data
+    # user's agent master data gets served
+    assert b'master name 5' in response.data
+    assert b'master description 5' in response.data
+    assert b'master name 6' in response.data
+    assert b'master description 6' in response.data
+    # other user's agent master data does not get served
+    assert b'master name 7' not in response.data
+    assert b'master description 7' not in response.data
 
 
 def test_new_master(app, client, auth):
@@ -29,7 +37,7 @@ def test_new_master(app, client, auth):
     auth.login()
     response = client.get('/masters/new/list')
     assert response.status_code == 200
-    # data validation
+    # data validation (list master)
     response = client.post(
         'masters/new/list',
         data = {'name': '', 'description': ''}
@@ -38,15 +46,61 @@ def test_new_master(app, client, auth):
     # list master is saved to database
     response = client.post(
         'masters/new/list',
-        data = {'name': 'master name 5', 'description': 'master description 5'},
+        data = {'name': 'master name 8', 'description': 'master description 8'},
     )
     with app.app_context():
         db = get_db()
         masters = db.execute('SELECT master_type, name, description FROM masters WHERE creator_id = 2').fetchall()
-        assert len(masters) == 3
-        assert masters[2]["master_type"] == "list"
-        assert masters[2]['name'] == 'master name 5'
-        assert masters[2]['description'] == 'master description 5'
+        assert len(masters) == 5
+        assert masters[4]["master_type"] == "list"
+        assert masters[4]['name'] == 'master name 8'
+        assert masters[4]['description'] == 'master description 8'
+    # data validation (agent master)
+    response = client.post(
+        "masters/new/agent",
+        data={"name": "", "description": "master description 9", "model": "gemini-1.5-pro", "role": "Testing Agent", "instructions": "Reply with one word: 'Working'"}
+    )
+    assert b'Model, name, role, and instructions are all required.' in response.data
+    response = client.post(
+        "masters/new/agent",
+        data={"name": "master name 9", "description": "master description 9", "model": "", "role": "Testing Agent", "instructions": "Reply with one word: 'Working'"}
+    )
+    assert b'Model, name, role, and instructions are all required.' in response.data
+    response = client.post(
+        "masters/new/agent",
+        data={"name": "master name 9", "description": "master description 9", "model": "gemini-1.5-pro", "role": "", "instructions": "Reply with one word: 'Working'"}
+    )
+    assert b'Model, name, role, and instructions are all required.' in response.data
+    response = client.post(
+        "masters/new/agent",
+        data={"name": "master name 9", "description": "master description 9", "model": "gemini-1.5-pro", "role": "Testing Agent", "instructions": ""}
+    )
+    assert b'Model, name, role, and instructions are all required.' in response.data
+    # agent master is saved to database
+    response = client.post(
+        'masters/new/agent',
+        data = {'name': 'master name 9', 'description': 'master description 9', "model": "gemini-1.5-pro", "role": "Testing Agent 9", "instructions": "Reply with one word: 'Working'. 9"},
+    )
+    with app.app_context():
+        db = get_db()
+        masters = db.execute('SELECT * FROM masters WHERE creator_id = 2').fetchall()
+        assert len(masters) == 6
+        assert masters[5]["master_type"] == "agent"
+        assert masters[5]['name'] == 'master name 9'
+        assert masters[5]['description'] == 'master description 9'
+        master_agents = db.execute('SELECT * FROM master_agents WHERE creator_id = 2').fetchall()
+        assert len(master_agents) == 3
+        new_master_agent = master_agents[-1]
+        assert new_master_agent["model"] == "gemini-1.5-pro"
+        assert new_master_agent["role"] == "Testing Agent 9"
+        assert new_master_agent["instructions"] == "Reply with one word: 'Working'. 9"
+        assert new_master_agent["vendor"] == "google"
+        master_agent_relations = db.execute(
+            "SELECT * FROM master_agent_relations"
+            " WHERE master_id = ?",
+            (masters[-1]["id"],)
+        ).fetchone()
+        assert master_agent_relations["master_agent_id"] == new_master_agent["id"]
     # redirected to masters.index
     assert response.status_code == 302
     assert response.headers['Location'] == '/masters/'
@@ -98,7 +152,7 @@ def test_view_list_master(app, client, auth):
     assert b'detail description 5' not in response.data
     assert b'detail description 6' not in response.data
     # list master must exist
-    assert client.get('masters/5/view').status_code == 404
+    assert client.get('masters/8/view').status_code == 404
 
 
 def test_edit_list_master(app, client, auth):
@@ -136,7 +190,7 @@ def test_edit_list_master(app, client, auth):
     assert response.status_code == 302
     assert response.headers['Location'] == '/masters/'
     # master must exist
-    assert client.get('/masters/5/edit').status_code == 404
+    assert client.get('/masters/8/edit').status_code == 404
 
 
 def test_delete_list_master(app, client, auth):
@@ -662,3 +716,91 @@ def test_delete_master_detail(client, auth, app):
     # redirect to master view
     assert response.status_code == 302
     assert response.headers['Location'] == '/masters/1/view'
+
+
+def test_view_agent_master(app, client, auth):
+    # user must be logged in
+    response = client.get('masters/5/view')
+    assert response.status_code == 302
+    assert response.headers['Location'] == '/auth/login'
+    # user must be agent master creator
+    auth.login('other', 'other')
+    assert client.get('masters/5/view').status_code == 403
+    auth.login()
+    response = client.get('/masters/5/view')
+    assert response.status_code == 200
+    # agent master data gets served
+    assert b'master name 5' in response.data
+    assert b'master description 5' in response.data
+    assert b'gpt-4o-mini' in response.data
+    assert b'Testing Agent 1' in response.data
+    assert b'Reply with one word: &#34;Working&#34; 1.' in response.data
+    # do not need to test that other data does not get served
+    # because the template only accepts one of each parameter.
+
+
+def test_edit_agent_master(app, client, auth):
+    # user must be logged in
+    response = client.get('/masters/5/edit')
+    assert response.status_code == 302
+    assert response.headers['Location'] == '/auth/login'
+    # user must be master creator
+    auth.login('other', 'other')
+    assert client.get('masters/5/edit').status_code == 403
+    auth.login()
+    response = client.get('masters/5/edit')
+    assert response.status_code == 200
+    # agent master data gets served
+    assert b'master name 5' in response.data
+    assert b'master description 5' in response.data
+    assert b'gpt-4o-mini' in response.data
+    assert b'Testing Agent 1' in response.data
+    assert b'Reply with one word: &#34;Working&#34; 1.' in response.data
+    # data validation
+    response = client.post(
+        "masters/5/edit",
+        data={"name": "", "description": "master description 9", "model": "gemini-1.5-pro", "role": "Testing Agent", "instructions": "Reply with one word: 'Working'"}
+    )
+    assert b'Model, name, role, and instructions are all required.' in response.data
+    response = client.post(
+        "masters/5/edit",
+        data={"name": "master name 9", "description": "master description 9", "model": "", "role": "Testing Agent", "instructions": "Reply with one word: 'Working'"}
+    )
+    assert b'Model, name, role, and instructions are all required.' in response.data
+    response = client.post(
+        "masters/5/edit",
+        data={"name": "master name 9", "description": "master description 9", "model": "gemini-1.5-pro", "role": "", "instructions": "Reply with one word: 'Working'"}
+    )
+    assert b'Model, name, role, and instructions are all required.' in response.data
+    response = client.post(
+        "masters/5/edit",
+        data={"name": "master name 9", "description": "master description 9", "model": "gemini-1.5-pro", "role": "Testing Agent", "instructions": ""}
+    )
+    assert b'Model, name, role, and instructions are all required.' in response.data
+    # changes are saved to database without affecting other data
+    with app.app_context():
+        db = get_db()
+        masters_before = db.execute("SELECT * FROM masters").fetchall()
+        master_agents_before = db.execute("SELECT * FROM master_agents").fetchall()
+        master_agent_relations_before = db.execute("SELECT * FROM master_agent_relations").fetchall()
+        response = client.post(
+            'masters/5/edit',
+            data={
+                "name": "master name 5 updated",
+                "description": "master description 5 updated",
+                "model": "gemini-2.0-flash",
+                "role": "Testing Agent Updated",
+                "instructions": "Response with one word: 'Working' 1 updated."
+            }
+        )
+        masters_after = db.execute('SELECT * FROM masters').fetchall()
+        master_agents_after = db.execute("SELECT * FROM master_agents").fetchall()
+        master_agent_relations_after = db.execute("SELECT * FROM master_agent_relations").fetchall()
+        assert masters_after[:4] == masters_before[:4]
+        assert masters_after[4] != masters_before[4]
+        assert masters_after[5:] == masters_before[5:]
+        assert masters_after[4]['name'] == 'master name 5 updated'
+        assert masters_after[4]['description'] == 'master description 5 updated'
+    # redirected to masters.index
+    assert response.status_code == 302
+    assert response.headers['Location'] == '/masters/'

@@ -33,18 +33,22 @@ def test_init_db_command(runner, monkeypatch):
 def test_data_entry(app):
     with app.app_context():
         db = get_db()
-        item_count = db.execute('SELECT COUNT(id) AS count FROM master_items').fetchone()['count']
-        assert item_count == 6
-        detail_count = db.execute('SELECT COUNT(id) AS count FROM master_details').fetchone()['count']
-        assert detail_count == 6
-        idr_count = db.execute('SELECT COUNT(id) AS count FROM master_item_detail_relations').fetchone()['count']
-        assert idr_count == 10
-        list_count = db.execute('SELECT COUNT(id) AS count FROM masters').fetchone()['count']
-        assert list_count == 4
-        lir_count = db.execute('SELECT COUNT(id) AS count FROM master_item_relations').fetchone()['count']
-        assert lir_count == 6
-        ldr_count = db.execute('SELECT COUNT(id) AS count FROM master_detail_relations').fetchone()['count']
-        assert ldr_count == 6
+        master_item_count = db.execute('SELECT COUNT(id) AS count FROM master_items').fetchone()['count']
+        assert master_item_count == 6
+        master_detail_count = db.execute('SELECT COUNT(id) AS count FROM master_details').fetchone()['count']
+        assert master_detail_count == 6
+        midr_count = db.execute('SELECT COUNT(id) AS count FROM master_item_detail_relations').fetchone()['count']
+        assert midr_count == 10
+        master_count = db.execute('SELECT COUNT(id) AS count FROM masters').fetchone()['count']
+        assert master_count == 7
+        mir_count = db.execute('SELECT COUNT(id) AS count FROM master_item_relations').fetchone()['count']
+        assert mir_count == 6
+        mdr_count = db.execute('SELECT COUNT(id) AS count FROM master_detail_relations').fetchone()['count']
+        assert mdr_count == 6
+        master_agent_count = db.execute("SELECT COUNT(id) AS count FROM master_agents").fetchone()["count"]
+        assert master_agent_count == 3
+        mar_count = db.execute("SELECT COUNT(id) AS count FROM master_agent_relations").fetchone()["count"]
+        assert mar_count == 3
        
 
 def test_admin_login(client, auth):

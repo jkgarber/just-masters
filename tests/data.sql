@@ -39,7 +39,10 @@ VALUES
 	(2, 'list', 'master name 1', 'master description 1'),
 	(2, 'list', 'master name 2', 'master description 2'),
 	(3, 'list', 'master name 3', 'master description 3'),
-	(3, 'list', 'master name 4', 'master description 4');
+	(3, 'list', 'master name 4', 'master description 4'),
+	(2, 'agent', 'master name 5', 'master description 5'),
+	(2, 'agent', 'master name 6', 'master description 6'),
+	(3, 'agent', 'master name 7', 'master description 7');
 
 INSERT INTO master_item_relations (master_id, master_item_id)
 VALUES
@@ -48,7 +51,7 @@ VALUES
 	(2, 3),
 	(3, 4),
 	(3, 5),
-	(5, 6);
+	(4, 6);
 
 INSERT INTO master_detail_relations (master_id, master_detail_id)
 VALUES
@@ -58,3 +61,15 @@ VALUES
 	(3, 4),
 	(3, 5),
 	(4, 6);
+
+INSERT INTO master_agents (creator_id, model, role, instructions, vendor)
+VALUES
+	(2, 'gpt-4o-mini', 'Testing Agent 1', 'Reply with one word: "Working" 1.', 'openai'),
+	(2, 'claude-3-5-haiku-latest', 'Testing Agent 2', 'Reply with one word: "Working" 2.', 'anthropic'),
+	(3, 'gemini-1.5-flash-8b', 'Testing Agent 3', 'Reply with one word: "Working". 3', 'google');
+
+INSERT INTO master_agent_relations (master_id, master_agent_id)
+VALUES
+	(5, 1),
+	(6, 2),
+	(7, 3);
