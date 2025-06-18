@@ -224,6 +224,8 @@ def view_item(master_id, item_id):
     for item in master['items']:
         if item['id'] == item_id:
             requested_item = item
+    if not requested_item:
+        abort(404)
     return render_template("masters/items/view.html", master=master, item=requested_item, details=master["details"])
 
 
@@ -232,6 +234,8 @@ def view_item(master_id, item_id):
 def edit_item(master_id, item_id):
     master = get_master(master_id)
     requested_item = next((item for item in master["items"] if item["id"] == item_id), None)
+    if not requested_item:
+        abort(404)
     if request.method == "POST":
         name = request.form['name']
         detail_fields = []
@@ -269,6 +273,8 @@ def edit_item(master_id, item_id):
 def delete_item(master_id, item_id):
     master = get_master(master_id)
     requested_item = next((item for item in master["items"] if item["id"] == item_id), None)
+    if not requested_item:
+        abort(404)
     details = master["details"]
     db = get_db()
     db.execute('DELETE FROM master_items WHERE id = ?', (item_id,))
@@ -351,6 +357,9 @@ def edit_detail(master_id, detail_id):
 @login_required
 def delete_detail(master_id, detail_id):
     master = get_master(master_id)
+    requested_detail = next((detail for detail in master["details"] if detail["id"] == detail_id), None)
+    if not requested_detail:
+        abort(404)
     db = get_db()
     db.execute('DELETE FROM master_details WHERE id = ?', (detail_id,))
     db.execute('DELETE FROM master_item_detail_relations WHERE master_detail_id = ?', (detail_id,))
